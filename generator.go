@@ -63,7 +63,7 @@ func (g *generator) generateResolvers(definitions []ast.Node) {
 	g.generateTypeResolver("resolver", "Resolver", operationTypes)
 }
 
-func (g *generator) createFile(fileName string) (*os.File, error) {
+func (g *generator) createFile(fileName string, needImport bool) (*os.File, error) {
 	fullPath := path.Join(g.dir, fileName+".go")
 	f, err := os.Create(fullPath)
 	if err != nil {
@@ -72,20 +72,20 @@ func (g *generator) createFile(fileName string) (*os.File, error) {
 
 	header := fmt.Sprintf("package %s\n", g.packageName)
 	f.Write([]byte(header))
-
-	const importStatements = `
+	if needImport {
+		const importStatements = `
 import (
 	"errors"
 )
 
 `
-	f.Write([]byte(importStatements))
-
+		f.Write([]byte(importStatements))
+	}
 	return f, nil
 }
 
 func (g *generator) generateTypeResolver(fileName, resolverName string, defs []*ast.ObjectDefinition) error {
-	f, err := g.createFile(fileName)
+	f, err := g.createFile(fileName, true)
 	defer f.Close()
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (g *generator) generateFieldResolvers(f *os.File, resolverName string, def 
 		returnType := convertGqlType(field.Type, true)
 		var args string
 		if len(field.Arguments) > 0 {
-			args = ", args " + g.generateArgumentStruct(field.Arguments)
+			args = "args " + g.generateArgumentStruct(field.Arguments)
 		}
 		f.Write([]byte(fmt.Sprintf("\n// %s resolves %s from %s", functionName, field.Name.Value, def.Name.Value)))
 		f.Write([]byte(fmt.Sprintf(`
@@ -136,7 +136,7 @@ func (g *generator) generateArgumentStruct(args []*ast.InputValueDefinition) str
 }
 
 func (g *generator) generateInterfaceResolver(fileName string, def *ast.InterfaceDefinition, implementors []string) error {
-	f, err := g.createFile(fileName)
+	f, err := g.createFile(fileName, true)
 	defer f.Close()
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func (%[3]s *%[1]s) To%[4]s() (*%[4]sResolver, bool) {
 }
 
 func (g *generator) generateEnumResolver(fileName string, def *ast.EnumDefinition) error {
-	f, err := g.createFile(fileName)
+	f, err := g.createFile(fileName, false)
 	defer f.Close()
 	if err != nil {
 		return err
