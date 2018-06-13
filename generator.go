@@ -75,8 +75,7 @@ func (g *generator) createFile(fileName string) (*os.File, error) {
 
 	const importStatements = `
 import (
-	"github.com/graph-gophers/graphql-go"
-	"golang.org/x/net/context"
+	"errors"
 )
 
 `
@@ -113,7 +112,7 @@ func (g *generator) generateFieldResolvers(f *os.File, resolverName string, def 
 		}
 		f.Write([]byte(fmt.Sprintf("\n// %s resolves %s from %s", functionName, field.Name.Value, def.Name.Value)))
 		f.Write([]byte(fmt.Sprintf(`
-func (%s *%s) %s(ctx context.Context%s) (%s, error) {
+func (%s *%s) %s(%s) (%s, error) {
 	// impl
 	return %s, errors.New("Not Implemented")
 }
